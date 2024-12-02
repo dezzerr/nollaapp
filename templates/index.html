@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nolla - Medical Transcription Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        :root {
+            --primary-dark: #1E341C;
+            --secondary-light: #A5E1A3;
+            --accent-green: #82F17E;
+            --background-white: #F5F5F5;
+            --accent-yellow: #F0D10C;
+        }
+
+        body {
+            background-color: var(--background-white);
+        }
+
+        .sidebar {
+            background-color: var(--primary-dark);
+            color: white;
+            width: 280px;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            border-right: 1px solid #e5e7eb;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: white;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #82F17E;
+        }
+
+        .nav-item.active {
+            color: #82F17E;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item i {
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover i,
+        .nav-item.active i {
+            color: #82F17E;
+        }
+
+        .sidebar-header {
+            color: white;
+        }
+
+        .sidebar-section-title {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            text-transform: uppercase;
+        }
+
+        .user-info {
+            color: white;
+        }
+
+        .user-email {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: var(--secondary-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-dark);
+            font-weight: bold;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+            background-color: #f3f6f9;
+            min-height: 100vh;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .transcription-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 8rem);
+        }
+
+        .transcription-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .transcription-controls {
+            flex-shrink: 0;
+        }
+
+        .note-container {
+            height: 100%;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .soap-field {
+            max-height: none;
+        }
+
+        .hipaa-badge {
+            background-color: var(--accent-yellow);
+            color: var(--primary-dark);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .spinner {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--accent-green);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+            100% { transform: scale(1); }
+        }
+
+        /* Toggle switch styling */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #82F17E;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Record button styling */
+        .record-btn {
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            background-color: #82F17E !important;
+            color: var(--primary-dark) !important;
+        }
+
+        .record-btn:hover {
+            opacity: 0.9;
+        }
+
+        .record-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .record-btn.recording {
+            background-color: #ef4444 !important;
+            color: white !important;
+        }
+
+        /* Editable fields styling */
+        .editable-field {
+            border: 1px solid transparent;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            transition: all 0.3s ease;
+            background-color: transparent;
+        }
+
+        .editable-field:hover {
+            border-color: var(--secondary-light);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .editable-field:focus {
+            outline: none;
+            border-color: #82F17E;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Date input styling */
+        input[type="date"] {
+            background-color: transparent;
+            border: 1px solid transparent;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            color: inherit;
+            font-family: inherit;
+            font-size: inherit;
+            cursor: pointer;
+        }
+
+        input[type="date"]:hover {
+            border-color: var(--secondary-light);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        input[type="date"]:focus {
+            outline: none;
+            border-color: #82F17E;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Hide default date picker icon */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            background-color: transparent;
+            cursor: pointer;
+        }
+
+        /* SOAP note fields */
+        .soap-fields {
+            height: calc(100vh - 350px);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .soap-field-container {
+            flex: 1;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .soap-field {
+            flex: 1;
+            width: 100%;
+            resize: none;
+            padding: 1rem;
+            border: 1px solid var(--secondary-light);
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .soap-field:focus {
+            outline: none;
+            border-color: #82F17E;
+            box-shadow: 0 0 0 2px rgba(130, 241, 126, 0.2);
+        }
+
+        /* Transcription area styling */
+        .transcription-area {
+            height: calc(100vh - 350px);
+            min-height: 400px;
+            padding: 1rem;
+            font-size: 0.875rem;
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes recordingPulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
+        }
+
+        /* Apply animations */
+        .record-btn.recording {
+            animation: recordingPulse 2s infinite;
+        }
+
+        .recording-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        #transcriptPanel, #notePanel {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .soap-field-container {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .soap-field {
+            transition: all 0.3s ease;
+        }
+
+        .soap-field:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Hover animations for buttons */
+        .record-btn:not(:disabled):hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .record-btn:not(:disabled):active {
+            transform: translateY(0);
+        }
+
+        /* Tab animations */
+        .tab {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .tab::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #82F17E;
+            transition: width 0.3s ease;
+        }
+
+        .tab[aria-selected="true"]::after {
+            width: 100%;
+        }
+
+        /* Shimmer loading animation */
+        @keyframes shimmer {
+            0% {
+                background-position: -1000px 0;
+            }
+            100% {
+                background-position: 1000px 0;
+            }
+        }
+
+        .loading-shimmer {
+            animation: shimmer 2s infinite linear;
+            background: linear-gradient(to right, #e8f7e8 4%, #d1f0d1 25%, #e8f7e8 36%);
+            background-size: 1000px 100%;
+        }
+
+        .loading-line {
+            height: 2rem;
+            margin: 0.75rem 0;
+            border-radius: 0.375rem;
+            width: 100%;
+        }
+
+        .loading-line:nth-child(2) {
+            width: 95%;
+        }
+
+        .loading-line:nth-child(3) {
+            width: 90%;
+        }
+
+        #loadingTranscription {
+            padding: 1rem;
+            width: 100%;
+        }
+
+        #loadingTranscription.hidden {
+            display: none;
+        }
+
+        /* Speaker segment styling */
+        .speaker-segment {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            position: relative;
+        }
+
+        .speaker-label {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--primary-dark);
+        }
+
+        .speaker-therapist {
+            background-color: rgba(130, 241, 126, 0.1);
+            border-left: 3px solid var(--accent-green);
+        }
+
+        .speaker-patient {
+            background-color: rgba(30, 52, 28, 0.1);
+            border-left: 3px solid var(--primary-dark);
+        }
+
+        .speaker-patient .speaker-label {
+            color: var(--primary-dark);
+        }
+
+        .timestamp {
+            font-size: 0.75rem;
+            color: #666;
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="p-4">
+            <div class="flex items-center space-x-3 mb-8">
+                <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="Nolla Logo" class="h-8">
+                <span class="text-lg font-semibold">Nolla</span>
+            </div>
+            <nav>
+                <a href="#" class="nav-item active">
+                    <i class="fas fa-microphone mr-3"></i>
+                    Transcription
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-history mr-3"></i>
+                    History
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-cog mr-3"></i>
+                    Settings
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content ml-280 p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">Nolla</h1>
+            <div class="flex items-center space-x-4">
+                <button id="newSessionBtn" class="bg-[#82F17E] text-primary-dark px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90">
+                    <i class="fas fa-plus"></i>
+                    <span>New Session</span>
+                </button>
+                <button id="downloadNotesBtn" class="bg-accent-green text-primary-dark px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90">
+                    <i class="fas fa-download"></i>
+                    <span>Download Notes</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Patient Info -->
+        <div class="bg-white rounded-xl shadow-sm border border-secondary-light mb-6 p-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <input type="text" id="patientName" class="editable-field text-xl font-semibold mb-1" placeholder="Enter Patient Name">
+                    <p class="text-sm text-gray-500">Patient ID: NOL-2023-001</p>
+                </div>
+                <div>
+                    <input type="date" id="sessionDate" class="editable-field">
+                </div>
+            </div>
+        </div>
+
+        <!-- Recording Section -->
+        <div class="transcription-container bg-white rounded-xl shadow-sm border border-secondary-light">
+            <!-- Recording Controls -->
+            <div class="transcription-controls border-b border-secondary-light p-6">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <button id="recordButton" class="record-btn" disabled>
+                            <i class="fas fa-microphone"></i>
+                            <span>Start Recording</span>
+                        </button>
+                        <span id="timer" class="text-lg font-mono">0:00</span>
+                        <div id="recordingStatus" class="hidden">
+                            <span class="recording-dot"></span>
+                            <span class="text-sm text-gray-600 ml-1">Recording...</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="consentToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="text-sm text-gray-600">Patient Consent</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="border-b border-secondary-light">
+                <nav class="flex justify-between items-center px-6" aria-label="Tabs">
+                    <div class="flex space-x-4">
+                        <button id="transcriptTab" class="tab px-4 py-3 text-sm font-medium border-b-2 border-transparent" aria-selected="true">
+                            Transcript
+                        </button>
+                        <button id="noteTab" class="tab px-4 py-3 text-sm font-medium border-b-2 border-transparent" aria-selected="false">
+                            Clinical Notes
+                        </button>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label class="text-sm text-gray-600">Template:</label>
+                        <select id="templateSelect" class="border border-secondary-light rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-accent-green focus:border-transparent">
+                            <option value="soap">SOAP Note</option>
+                            <option value="birp">BIRP Note</option>
+                            <option value="dap">DAP Note</option>
+                            <option value="basic">Basic Note</option>
+                        </select>
+                    </div>
+                </nav>
+            </div>
+
+            <!-- Content Panels -->
+            <div class="transcription-content">
+                <!-- Transcript Panel -->
+                <div id="transcriptPanel" class="h-full">
+                    <div id="loadingTranscription" class="hidden">
+                        <div class="loading-line loading-shimmer"></div>
+                        <div class="loading-line loading-shimmer"></div>
+                        <div class="loading-line loading-shimmer"></div>
+                    </div>
+                    <div id="transcriptionOutput" class="space-y-4"></div>
+                </div>
+
+                <!-- Notes Panel -->
+                <div id="notePanel" class="hidden note-container">
+                    <!-- SOAP Note Template -->
+                    <div id="soapTemplate" class="space-y-6">
+                        <div class="soap-field-container">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Subjective</label>
+                            <textarea id="subjectiveText" class="soap-field"></textarea>
+                        </div>
+                        <div class="soap-field-container">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Objective</label>
+                            <textarea id="objectiveText" class="soap-field"></textarea>
+                        </div>
+                        <div class="soap-field-container">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Assessment</label>
+                            <textarea id="assessmentText" class="soap-field"></textarea>
+                        </div>
+                        <div class="soap-field-container">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Plan</label>
+                            <textarea id="planText" class="soap-field"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- BIRP Note Template -->
+                    <div id="birpTemplate" class="space-y-6 hidden">
+                        <div class="soap-field-container">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Behavior</label>
+                            <textarea id="behaviorText" class="soap-field" placeholder="Document client's presentation and behavior during the session..."></textarea>
+                        </div>
+                        <div class="soap-field-container">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Intervention</label>
+                            <textarea id="interventionText" class="soap-field" placeholder="Document interventions and themes explored during the session..."></textarea>
+                        </div>
+                        <div class="soap-field-container">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Response</label>
+                            <textarea id="responseText" class="soap-field" placeholder="Document how the client responded to interventions..."></textarea>
+                        </div>
+                        <div class="soap-field-container">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Plan</label>
+                            <textarea id="birpPlanText" class="soap-field" placeholder="Document plan for future sessions..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- DAP Note Template -->
+                    <div id="dapTemplate" class="space-y-6 hidden">
+                        <div class="soap-field-container">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Data</label>
+                            <textarea id="dataText" class="soap-field" placeholder="Document observable, measurable data about the client..."></textarea>
+                        </div>
+                        <div class="soap-field-container">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Assessment</label>
+                            <textarea id="dapAssessmentText" class="soap-field" placeholder="Document professional assessment and progress..."></textarea>
+                        </div>
+                        <div class="soap-field-container">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Plan</label>
+                            <textarea id="dapPlanText" class="soap-field" placeholder="Document plan for future sessions..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Basic Note Template -->
+                    <div id="basicTemplate" class="space-y-6 hidden">
+                        <div class="soap-field-container">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Presentation</label>
+                            <textarea id="presentationText" class="soap-field" placeholder="Document session format and client's appearance..."></textarea>
+                        </div>
+                        <div class="soap-field-container">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">State</label>
+                            <textarea id="stateText" class="soap-field" placeholder="Document client's emotional state and functioning..."></textarea>
+                        </div>
+                        <div class="soap-field-container">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Assessment</label>
+                            <textarea id="basicAssessmentText" class="soap-field" placeholder="Document assessments administered and results..."></textarea>
+                        </div>
+                        <div class="soap-field-container">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Themes</label>
+                            <textarea id="themesText" class="soap-field" placeholder="Document themes explored during session..."></textarea>
+                        </div>
+                        <div class="soap-field-container">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Treatment</label>
+                            <textarea id="treatmentText" class="soap-field" placeholder="Document interventions and client's response..."></textarea>
+                        </div>
+                        <div class="soap-field-container">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Progress</label>
+                            <textarea id="progressText" class="soap-field" placeholder="Document developments and modifications to treatment plan..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
