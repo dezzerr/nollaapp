@@ -1,86 +1,156 @@
-# Nolla - Medical Transcription Dashboard
+# Nolla Transcription Dashboard
 
-A modern web application for medical professionals to transcribe and manage clinical notes with features like speaker diarization and multiple note templates.
+A modern web application for medical professionals to record, transcribe, and generate clinical notes and letters from patient sessions. Built with Flask, OpenAI's APIs, and modern web technologies.
 
 ## Features
 
-- Real-time audio transcription using OpenAI's Whisper model
-- Speaker diarization to differentiate between clinician and patient
-- Multiple note templates (SOAP, BIRP, DAP, Basic)
-- PDF export functionality
-- Modern, responsive user interface
+- **Audio Recording**: Real-time audio recording with visual feedback
+- **Transcription**: Automatic transcription using OpenAI's Whisper model
+- **Speaker Diarization**: Distinguishes between clinician and patient in transcripts
+- **Multiple Note Templates**: Support for various clinical note formats:
+  - SOAP (Subjective, Objective, Assessment, Plan)
+  - BIRP (Behavior, Intervention, Response, Plan)
+  - DAP (Data, Assessment, Plan)
+  - Basic Template
+- **Clinical Letter Generation**: AI-powered generation of professional clinical letters
+- **Modern UI**: Clean, responsive interface with real-time updates
 
-## Prerequisites
+## Tech Stack
 
-- Docker
-- OpenAI API key
+### Backend
+- **Flask**: Web framework
+- **Flask-SocketIO**: Real-time communication
+- **Flask-SQLAlchemy**: Database ORM
+- **Flask-Login**: User authentication
+- **OpenAI API**: Whisper (transcription) and GPT-3.5 (note generation)
 
-## Deployment Instructions
+### Frontend
+- **HTML5/CSS3**: Structure and styling
+- **JavaScript**: Client-side functionality
+- **TailwindCSS**: Utility-first CSS framework
+- **Font Awesome**: Icons
+- **MediaRecorder API**: Audio recording
 
-1. Clone the repository:
-   ```bash
-   git clone <your-repository-url>
-   cd nolla-medical-transcription
-   ```
+## Setup
 
-2. Create a `.env` file with your OpenAI API key:
-   ```
-   OPENAI_API_KEY=your_api_key_here
-   ```
+1. Clone the repository
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-3. Build and run with Docker:
-   ```bash
-   docker build -t nolla-medical .
-   docker run -p 8080:8080 --env-file .env nolla-medical
-   ```
+3. Set up environment variables in `.env`:
+```env
+OPENAI_API_KEY=your_api_key
+OPENAI_ORG_ID=your_org_id  # Optional
+SECRET_KEY=your_secret_key
+```
 
-4. Access the application at `http://localhost:8080`
+4. Initialize the database:
+```bash
+python create_db.py
+```
 
-## Cloud Deployment Options
+5. Run the application:
+```bash
+python appnolla1.py
+```
 
-### Deploy to Heroku
+## Project Structure
 
-1. Install the Heroku CLI and login:
-   ```bash
-   heroku login
-   ```
+```
+nolla-transcription-dashboard/
+├── appnolla1.py           # Main Flask application
+├── create_db.py           # Database initialization
+├── requirements.txt       # Python dependencies
+├── .env                   # Environment variables
+├── static/
+│   ├── js/
+│   │   └── app.js        # Frontend JavaScript
+│   └── images/           # Static images
+├── templates/
+│   ├── index.html        # Main application template
+│   ├── login.html        # Login page
+│   └── signup.html       # Signup page
+└── temp/                 # Temporary audio files
+```
 
-2. Create a new Heroku app:
-   ```bash
-   heroku create your-app-name
-   ```
+## Key Components
 
-3. Set the OpenAI API key:
-   ```bash
-   heroku config:set OPENAI_API_KEY=your_api_key_here
-   ```
+### Authentication System
+- User registration and login
+- Secure password hashing
+- Session management
 
-4. Deploy the application:
-   ```bash
-   git push heroku main
-   ```
+### Audio Recording
+- Browser-based audio recording
+- Real-time timer display
+- Patient consent toggle
 
-### Deploy to Google Cloud Run
+### Transcription System
+- Audio file handling
+- OpenAI Whisper integration
+- Speaker diarization processing
 
-1. Install and initialize the Google Cloud SDK
-2. Enable the Cloud Run API
-3. Build and push the container:
-   ```bash
-   gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/nolla-medical
-   ```
+### Note Generation
+- Multiple template support
+- AI-powered note structuring
+- Real-time template switching
 
-4. Deploy to Cloud Run:
-   ```bash
-   gcloud run deploy --image gcr.io/YOUR_PROJECT_ID/nolla-medical --platform managed
-   ```
+### Letter Generation
+- Context-aware letter creation
+- Professional formatting
+- Copy-to-clipboard functionality
 
-## Security Considerations
+## API Integration
 
-- The application requires patient consent before processing audio
-- All data is processed securely and not stored permanently
-- Uses environment variables for sensitive information
-- Implements proper error handling and input validation
+### OpenAI APIs
+1. **Whisper API**
+   - Used for accurate speech-to-text transcription
+   - Handles multiple languages
+   - High accuracy for medical terminology
+
+2. **GPT-3.5 API**
+   - Generates structured clinical notes
+   - Creates professional medical letters
+   - Handles medical context and terminology
+
+## Styling
+
+The application uses a custom color scheme:
+- Primary Dark: #1E341C
+- Secondary Light: #A5E1A3
+- Accent Green: #82F17E
+
+UI components feature:
+- Clean, minimal design
+- Responsive layouts
+- Smooth transitions
+- Visual feedback for user actions
+
+## Error Handling
+
+- Rate limit handling for OpenAI API
+- Audio recording fallbacks
+- Graceful error messages
+- Session persistence
+
+## Future Enhancements
+
+Potential areas for improvement:
+- [ ] Enhanced error handling
+- [ ] Additional note templates
+- [ ] Export functionality for notes and letters
+- [ ] Advanced audio processing
+- [ ] Real-time collaboration features
+- [ ] Analytics dashboard
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- OpenAI for their powerful APIs
+- Flask and its extension authors
+- The medical professionals who provided feedback

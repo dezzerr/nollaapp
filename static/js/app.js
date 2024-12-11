@@ -7,8 +7,10 @@ const transcriptionOutput = document.getElementById('transcriptionOutput');
 const loadingTranscription = document.getElementById('loadingTranscription');
 const transcriptTab = document.getElementById('transcriptTab');
 const noteTab = document.getElementById('noteTab');
+const letterTab = document.getElementById('letterTab');
 const transcriptPanel = document.getElementById('transcriptPanel');
 const notePanel = document.getElementById('notePanel');
+const letterPanel = document.getElementById('letterPanel');
 const subjectiveText = document.getElementById('subjectiveText');
 const objectiveText = document.getElementById('objectiveText');
 const assessmentText = document.getElementById('assessmentText');
@@ -26,6 +28,16 @@ const basicAssessmentText = document.getElementById('basicAssessmentText');
 const themesText = document.getElementById('themesText');
 const treatmentText = document.getElementById('treatmentText');
 const progressText = document.getElementById('progressText');
+const letterRequest = document.getElementById('letterRequest');
+const generateLetterBtn = document.getElementById('generateLetterBtn');
+const letterOutput = document.getElementById('letterOutput');
+const letterContent = document.getElementById('letterContent');
+
+let mediaRecorder;
+let audioChunks = [];
+let timerInterval;
+let startTime;
+let isRecording = false;
 
 // Template elements
 const templateSelect = document.getElementById('templateSelect');
@@ -33,12 +45,6 @@ const soapTemplate = document.getElementById('soapTemplate');
 const birpTemplate = document.getElementById('birpTemplate');
 const dapTemplate = document.getElementById('dapTemplate');
 const basicTemplate = document.getElementById('basicTemplate');
-
-let mediaRecorder;
-let audioChunks = [];
-let timerInterval;
-let startTime;
-let isRecording = false;
 
 // Initialize MediaRecorder
 async function initializeRecorder() {
@@ -112,20 +118,14 @@ function stopRecording() {
 
 // Template switching
 templateSelect.addEventListener('change', function() {
-    const templates = {
-        'soap': soapTemplate,
-        'birp': birpTemplate,
-        'dap': dapTemplate,
-        'basic': basicTemplate
-    };
-
-    // Hide all templates
-    Object.values(templates).forEach(template => {
-        if (template) template.classList.add('hidden');
-    });
-
+    // Hide all templates first
+    document.getElementById('soapTemplate').classList.add('hidden');
+    document.getElementById('birpTemplate').classList.add('hidden');
+    document.getElementById('dapTemplate').classList.add('hidden');
+    document.getElementById('basicTemplate').classList.add('hidden');
+    
     // Show selected template
-    const selectedTemplate = templates[this.value];
+    const selectedTemplate = document.getElementById(`${this.value}Template`);
     if (selectedTemplate) {
         selectedTemplate.classList.remove('hidden');
     }
@@ -136,7 +136,7 @@ async function sendAudioForTranscription(audioBlob) {
     try {
         // Show loading state
         document.getElementById('loadingTranscription').classList.remove('hidden');
-        document.getElementById('transcriptionOutput').innerHTML = '';
+        document.getElementById('transcriptionOutput').innerHTML = 'Starting transcription...';
         
         // Create form data
         const formData = new FormData();
@@ -149,160 +149,249 @@ async function sendAudioForTranscription(audioBlob) {
             body: formData
         });
 
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        }
+
         // Create a reader to read the stream
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
+        let buffer = '';
 
-        while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-
-            // Process each chunk
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n').filter(line => line.trim());
-
-            for (const line of lines) {
-                try {
-                    const data = JSON.parse(line);
-                    
-                    // Update UI based on status
-                    switch (data.status) {
-                        case 'transcribing':
-                            document.getElementById('transcriptionOutput').innerHTML = 'Transcribing audio...';
-                            break;
-                            
-                        case 'processing':
-                            document.getElementById('transcriptionOutput').innerHTML = data.transcription;
-                            break;
-                            
-                        case 'diarizing':
-                            displayDiarizedTranscription(data.diarized);
-                            break;
-                            
-                        case 'complete':
-                            displayDiarizedTranscription(data.diarized_content);
-                            updateNoteFields(data.notes);
-                            break;
-                            
-                        case 'error':
-                            throw new Error(data.error);
+        try {
+            while (true) {
+                const { value, done } = await reader.read();
+                
+                if (done) {
+                    // Process any remaining data in buffer
+                    if (buffer.trim()) {
+                        try {
+                            const data = JSON.parse(buffer.trim());
+                            await processTranscriptionData(data);
+                        } catch (e) {
+                            console.error('Error processing final chunk:', e);
+                        }
                     }
-                } catch (e) {
-                    console.error('Error processing chunk:', e);
+                    break;
+                }
+
+                // Decode the chunk and add to buffer
+                buffer += decoder.decode(value, { stream: true });
+                
+                // Process complete lines
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || ''; // Keep the last incomplete line in buffer
+
+                for (const line of lines) {
+                    if (line.trim()) {
+                        try {
+                            const data = JSON.parse(line.trim());
+                            await processTranscriptionData(data);
+                        } catch (e) {
+                            console.error('Error processing chunk:', e);
+                        }
+                    }
                 }
             }
+        } finally {
+            reader.releaseLock();
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error processing audio: ' + error.message);
+        document.getElementById('transcriptionOutput').innerHTML = `Error: ${error.message}`;
     } finally {
         // Hide loading state
         document.getElementById('loadingTranscription').classList.add('hidden');
     }
 }
 
+async function processTranscriptionData(data) {
+    switch (data.status) {
+        case 'transcribing':
+            document.getElementById('transcriptionOutput').innerHTML = 'Transcribing audio...';
+            break;
+            
+        case 'processing':
+            document.getElementById('transcriptionOutput').innerHTML = data.transcription;
+            break;
+            
+        case 'diarizing':
+            if (data.diarized) {
+                displayDiarizedTranscription(data.diarized);
+            }
+            break;
+            
+        case 'complete':
+            if (data.diarized_content) {
+                displayDiarizedTranscription(data.diarized_content);
+            }
+            if (data.notes) {
+                updateNoteFields(data.notes);
+            }
+            break;
+            
+        case 'error':
+            throw new Error(data.error || 'Unknown error occurred');
+    }
+}
+
 function displayDiarizedTranscription(diarizedContent) {
+    const transcriptionOutput = document.getElementById('transcriptionOutput');
     transcriptionOutput.innerHTML = '';
-    
-    diarizedContent.segments.forEach(segment => {
-        const speakerClass = segment.speaker.toLowerCase() === 'clinician'
-                           ? 'speaker-therapist' 
-                           : 'speaker-patient';
+
+    if (!diarizedContent || !diarizedContent.segments) {
+        console.error('Invalid diarized content structure:', diarizedContent);
+        return;
+    }
+
+    diarizedContent.segments.forEach((segment) => {
+        if (!segment.text.trim()) return;
+
+        const lineElement = document.createElement('div');
+        lineElement.className = 'transcription-line';
         
-        const segmentDiv = document.createElement('div');
-        segmentDiv.className = `speaker-segment ${speakerClass}`;
+        // Add transcription text
+        const textDiv = document.createElement('div');
+        textDiv.className = 'transcription-text';
+        textDiv.textContent = segment.text;
+        lineElement.appendChild(textDiv);
         
-        segmentDiv.innerHTML = `
-            <div class="speaker-label">${segment.speaker}</div>
-            <div class="timestamp">${segment.timestamp}</div>
-            <div class="mt-1">${segment.text}</div>
-        `;
-        
-        transcriptionOutput.appendChild(segmentDiv);
+        transcriptionOutput.appendChild(lineElement);
     });
+    
+    // Hide loading indicator
+    document.getElementById('loadingTranscription').classList.add('hidden');
+}
+
+function formatTimestamp(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
 function updateNoteFields(notes) {
     if (!notes) return;
 
-    // Clear all fields first
-    const clearFields = () => {
-        const textareas = document.querySelectorAll('textarea');
-        textareas.forEach(textarea => textarea.value = '');
-    };
-    clearFields();
-
-    // Show the correct template and populate fields
-    const templates = {
-        'soap': soapTemplate,
-        'birp': birpTemplate,
-        'dap': dapTemplate,
-        'basic': basicTemplate
-    };
-
-    // Hide all templates first
-    Object.values(templates).forEach(template => {
-        if (template) template.classList.add('hidden');
-    });
-
-    // Show the selected template
-    const selectedTemplate = templates[templateSelect.value];
-    if (selectedTemplate) {
-        selectedTemplate.classList.remove('hidden');
-    }
-
-    // Populate the fields based on template type
-    switch (templateSelect.value) {
+    const template = templateSelect.value;
+    
+    switch (template) {
         case 'soap':
-            if (subjectiveText) subjectiveText.value = notes.subjective || '';
-            if (objectiveText) objectiveText.value = notes.objective || '';
-            if (assessmentText) assessmentText.value = notes.assessment || '';
-            if (planText) planText.value = notes.plan || '';
+            if (notes.subjective) subjectiveText.value = notes.subjective;
+            if (notes.objective) objectiveText.value = notes.objective;
+            if (notes.assessment) assessmentText.value = notes.assessment;
+            if (notes.plan) planText.value = notes.plan;
             break;
+            
         case 'birp':
-            if (behaviorText) behaviorText.value = notes.behavior || '';
-            if (interventionText) interventionText.value = notes.intervention || '';
-            if (responseText) responseText.value = notes.response || '';
-            if (birpPlanText) birpPlanText.value = notes.plan || '';
+            if (notes.behavior) behaviorText.value = notes.behavior;
+            if (notes.intervention) interventionText.value = notes.intervention;
+            if (notes.response) responseText.value = notes.response;
+            if (notes.plan) birpPlanText.value = notes.plan;
             break;
+            
         case 'dap':
-            if (dataText) dataText.value = notes.data || '';
-            if (dapAssessmentText) dapAssessmentText.value = notes.assessment || '';
-            if (dapPlanText) dapPlanText.value = notes.plan || '';
+            if (notes.data) dataText.value = notes.data;
+            if (notes.assessment) dapAssessmentText.value = notes.assessment;
+            if (notes.plan) dapPlanText.value = notes.plan;
             break;
+            
         case 'basic':
-            if (presentationText) presentationText.value = notes.presentation || '';
-            if (stateText) stateText.value = notes.state || '';
-            if (basicAssessmentText) basicAssessmentText.value = notes.assessment || '';
-            if (themesText) themesText.value = notes.themes || '';
-            if (treatmentText) treatmentText.value = notes.treatment || '';
-            if (progressText) progressText.value = notes.progress || '';
+            if (notes.presentation) presentationText.value = notes.presentation;
+            if (notes.state) stateText.value = notes.state;
+            if (notes.assessment) basicAssessmentText.value = notes.assessment;
+            if (notes.plan) basicPlanText.value = notes.plan;
             break;
     }
+    
+    // Switch to note tab after updating fields
+    switchTab('note');
 }
 
 // Tab switching
 function switchTab(tabName) {
-    const tabs = {
-        'transcript': { tab: transcriptTab, panel: transcriptPanel },
-        'note': { tab: noteTab, panel: notePanel }
-    };
-
-    // Hide all panels and deselect all tabs
-    Object.values(tabs).forEach(({ tab, panel }) => {
-        if (tab && panel) {
-            tab.setAttribute('aria-selected', 'false');
-            tab.classList.remove('active');
-            panel.classList.add('hidden');
-        }
+    // Remove active class from all tabs and panels
+    const tabs = [transcriptTab, noteTab, letterTab];
+    const panels = [transcriptPanel, notePanel, letterPanel];
+    
+    tabs.forEach(tab => {
+        tab.classList.remove('active');
+        tab.classList.remove('text-primary-dark');
+        tab.classList.remove('border-accent-green');
+        tab.setAttribute('aria-selected', 'false');
     });
+    
+    panels.forEach(panel => panel.classList.add('hidden'));
+    
+    // Add active class to selected tab and show corresponding panel
+    switch (tabName) {
+        case 'transcript':
+            transcriptTab.classList.add('active', 'text-primary-dark', 'border-accent-green');
+            transcriptTab.setAttribute('aria-selected', 'true');
+            transcriptPanel.classList.remove('hidden');
+            break;
+        case 'note':
+            noteTab.classList.add('active', 'text-primary-dark', 'border-accent-green');
+            noteTab.setAttribute('aria-selected', 'true');
+            notePanel.classList.remove('hidden');
+            break;
+        case 'letter':
+            letterTab.classList.add('active', 'text-primary-dark', 'border-accent-green');
+            letterTab.setAttribute('aria-selected', 'true');
+            letterPanel.classList.remove('hidden');
+            break;
+    }
+}
 
-    // Show selected tab and panel
-    const selected = tabs[tabName];
-    if (selected && selected.tab && selected.panel) {
-        selected.tab.setAttribute('aria-selected', 'true');
-        selected.tab.classList.add('active');
-        selected.panel.classList.remove('hidden');
+// Letter generation
+async function generateLetter() {
+    if (!letterRequest.value.trim()) {
+        alert('Please enter a letter request');
+        return;
+    }
+
+    try {
+        generateLetterBtn.disabled = true;
+        document.getElementById('letterContent').innerHTML = 'Generating letter...';
+        letterOutput.classList.remove('hidden');
+
+        const response = await fetch('/generate_letter', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                request: letterRequest.value,
+                transcript: transcriptionOutput.innerHTML
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to generate letter');
+        }
+
+        const data = await response.json();
+        document.getElementById('letterContent').innerHTML = data.letter;
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('letterContent').innerHTML = `Error: ${error.message}`;
+    } finally {
+        generateLetterBtn.disabled = false;
+    }
+}
+
+async function copyLetter() {
+    const letterContent = document.getElementById('letterContent').innerText;
+    try {
+        await navigator.clipboard.writeText(letterContent);
+        const copyButton = document.querySelector('.copy-button');
+        const originalIcon = copyButton.innerHTML;
+        copyButton.innerHTML = '<i class="fas fa-check"></i>';
+        setTimeout(() => {
+            copyButton.innerHTML = originalIcon;
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy text: ', err);
     }
 }
 
@@ -317,6 +406,9 @@ recordButton.addEventListener('click', () => {
 
 transcriptTab.addEventListener('click', () => switchTab('transcript'));
 noteTab.addEventListener('click', () => switchTab('note'));
+letterTab.addEventListener('click', () => switchTab('letter'));
+generateLetterBtn.addEventListener('click', generateLetter);
+document.querySelector('.copy-button').addEventListener('click', copyLetter);
 
 // New Session functionality
 document.getElementById('newSessionBtn').addEventListener('click', () => {

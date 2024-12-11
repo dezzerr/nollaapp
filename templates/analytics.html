@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold text-[#1E341C]">Analytics Dashboard</h1>
+        <p class="text-gray-600 mt-1">Welcome back, {{ current_user.name }}</p>
+        <div class="flex gap-4">
+            <button onclick="updateData(7)" class="px-4 py-2 rounded-lg bg-[#A5E1A3] hover:bg-[#82F17E] text-[#1E341C]">Last 7 Days</button>
+            <button onclick="updateData(30)" class="px-4 py-2 rounded-lg bg-[#A5E1A3] hover:bg-[#82F17E] text-[#1E341C]">Last 30 Days</button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Daily Transcriptions -->
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-[#1E341C]">Daily Transcriptions</h2>
+            <canvas id="dailyChart"></canvas>
+        </div>
+
+        <!-- Average Duration -->
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-[#1E341C]">Average Transcription Time</h2>
+            <div class="flex items-center justify-center h-48">
+                <div class="text-center">
+                    <span id="avgDuration" class="text-4xl font-bold text-[#1E341C]">0</span>
+                    <p class="text-gray-600 mt-2">seconds</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Template Usage -->
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-[#1E341C]">Popular Templates</h2>
+            <canvas id="templateChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let dailyChart, templateChart;
+
+function initCharts() {
+    // Daily Transcriptions Chart
+    const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+    dailyChart = new Chart(dailyCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Transcriptions',
+                data: [],
+                borderColor: '#82F17E',
+                backgroundColor: '#A5E1A3',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+
+    // Template Usage Chart
+    const templateCtx = document.getElementById('templateChart').getContext('2d');
+    templateChart = new Chart(templateCtx, {
+        type: 'doughnut',
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                backgroundColor: [
+                    '#1E341C',
+                    '#A5E1A3',
+                    '#82F17E',
+                    '#4A7A48'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+async function updateData(days) {
+    try {
+        const response = await fetch(`/api/analytics/data?days=${days}`);
+        const data = await response.json();
+
+        // Update Daily Chart
+        dailyChart.data.labels = data.daily_transcriptions.map(d => d.date);
+        dailyChart.data.datasets[0].data = data.daily_transcriptions.map(d => d.count);
+        dailyChart.update();
+
+        // Update Average Duration
+        document.getElementById('avgDuration').textContent = 
+            Math.round(data.avg_duration * 10) / 10;
+
+        // Update Template Chart
+        templateChart.data.labels = data.template_usage.map(t => t.template);
+        templateChart.data.datasets[0].data = data.template_usage.map(t => t.count);
+        templateChart.update();
+    } catch (error) {
+        console.error('Error fetching analytics data:', error);
+    }
+}
+
+// Initialize charts and load data
+document.addEventListener('DOMContentLoaded', () => {
+    initCharts();
+    updateData(7);
+});
+</script>
+{% endblock %}
