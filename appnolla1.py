@@ -26,24 +26,56 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Response, stream_with_context
 from datetime import timedelta
+import logging
+import sys
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]',
+    stream=sys.stdout
+)
 
 # Load environment variables from .env file
 load_dotenv()
 
-app = Flask(__name__, 
-    static_url_path='',  # This makes static files available at root URL
+app = Flask(
+    __name__,
     static_folder='static',  # This is the directory where static files are stored
     template_folder='templates'  # This is the directory where templates are stored
 )
+
+# Print environment variables for debugging (excluding sensitive data)
+app.logger.info(f"FLASK_ENV: {os.getenv('FLASK_ENV')}")
+app.logger.info(f"DATABASE_URL: {'Set' if os.getenv('DATABASE_URL') else 'Not Set'}")
+app.logger.info(f"PORT: {os.getenv('PORT')}")
+
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
-# Database configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///nolla.db')
-if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
-    app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace('postgres://', 'postgresql://', 1)
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Database configuration with error handling
+try:
+    database_url = os.getenv('DATABASE_URL', 'sqlite:///nolla.db')
+    app.logger.info(f"Initial DATABASE_URL: {database_url.split('@')[0]}...")  # Log only the non-sensitive part
+    
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+        app.logger.info("Converted postgres:// to postgresql://")
+    
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    
+    # Test database connection
+    db = SQLAlchemy(app)
+    with app.app_context():
+        db.engine.connect()
+        app.logger.info("Database connection successful")
+except Exception as e:
+    app.logger.error(f"Database configuration error: {str(e)}")
+    app.logger.error(f"Error type: {type(e)}")
+    import traceback
+    app.logger.error(f"Traceback: {traceback.format_exc()}")
 
 CORS(app)
-db = SQLAlchemy(app)
 # Initialize Flask-SocketIO with gevent
 socketio = SocketIO(app, async_mode='gevent', cors_allowed_origins="*")  
 login_manager = LoginManager()
@@ -868,6 +900,26 @@ def extract_basic_sections(content):
             
     return {k: v.strip() for k, v in sections.items()}
 
+@app.route('/health')
+def health_check():
+    try:
+        # Test database connection
+        db.session.execute('SELECT 1')
+        return jsonify({
+            'status': 'healthy',
+            'database': 'connected',
+            'environment': os.getenv('FLASK_ENV', 'not set'),
+            'database_url': 'configured' if os.getenv('DATABASE_URL') else 'not configured'
+        })
+    except Exception as e:
+        app.logger.error(f"Health check failed: {str(e)}")
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e),
+            'environment': os.getenv('FLASK_ENV', 'not set'),
+            'database_url': 'configured' if os.getenv('DATABASE_URL') else 'not configured'
+        }), 500
+
 @app.route('/analytics')
 @login_required
 def analytics():
@@ -905,20 +957,30 @@ if __name__ == '__main__':
             api_key=os.getenv('OPENAI_API_KEY'),
             organization=os.getenv('OPENAI_ORG_ID')
         )
-        print("OpenAI client initialized successfully")
+        app.logger.info("OpenAI client initialized successfully")
         
         # Create the database tables
         with app.app_context():
-            db.create_all()
+            try:
+                db.create_all()
+                app.logger.info("Database tables created successfully")
+            except Exception as e:
+                app.logger.error(f"Failed to create database tables: {str(e)}")
+                raise
         
         port = int(os.getenv('PORT', 8080))
+        app.logger.info(f"Starting server on port {port}")
+        
         if os.getenv('FLASK_ENV') == 'development':
+            app.logger.info("Running in development mode")
             socketio.run(app, debug=True, port=port, allow_unsafe_werkzeug=True)
         else:
+            app.logger.info("Running in production mode")
             socketio.run(app, host='0.0.0.0', port=port, debug=False)
             
     except Exception as e:
-        print(f"Failed to start server: {str(e)}")
-        print(f"Error type: {type(e)}")
+        app.logger.error(f"Failed to start server: {str(e)}")
+        app.logger.error(f"Error type: {type(e)}")
         import traceback
-        print(f"Traceback: {traceback.format_exc()}")
+        app.logger.error(f"Traceback: {traceback.format_exc()}")
+        sys.exit(1)
