@@ -1,5 +1,12 @@
 name: nolla-app
 region: lon
+databases:
+- engine: PG
+  name: nolla-db
+  num_nodes: 1
+  size: db-s-dev-database
+  version: "14"
+
 services:
 - name: nollaapp2
   environment_slug: python
@@ -23,5 +30,8 @@ services:
   - key: FLASK_ENV
     scope: RUN_AND_BUILD_TIME
     value: production
+  - key: DATABASE_URL
+    scope: RUN_AND_BUILD_TIME
+    value: ${nolla-db.DATABASE_URL}
 features:
 - buildpack-stack=ubuntu-22
