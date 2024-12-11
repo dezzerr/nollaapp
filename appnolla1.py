@@ -69,11 +69,26 @@ try:
     with app.app_context():
         db.engine.connect()
         app.logger.info("Database connection successful")
+        
+    # Initialize database tables
+    with app.app_context():
+        try:
+            app.logger.info("Checking database tables...")
+            db.create_all()
+            app.logger.info("Database tables are ready")
+        except Exception as e:
+            app.logger.error(f"Error initializing database: {str(e)}")
+            if not os.getenv('FLASK_ENV') == 'development':
+                raise  # In production, fail fast if database isn't ready
+                
 except Exception as e:
     app.logger.error(f"Database configuration error: {str(e)}")
     app.logger.error(f"Error type: {type(e)}")
     import traceback
     app.logger.error(f"Traceback: {traceback.format_exc()}")
+    app.logger.error(f"Error initializing database: {str(e)}")
+    if not os.getenv('FLASK_ENV') == 'development':
+        raise  # In production, fail fast if database isn't ready
 
 CORS(app)
 # Initialize Flask-SocketIO with gevent
