@@ -625,9 +625,6 @@ def transcribe_audio(audio_file):
                 
         except Exception as e:
             print(f"OpenAI API error: {str(e)}")
-            print(f"Error type: {type(e)}")
-            import traceback
-            print(f"Traceback: {traceback.format_exc()}")
             raise
             
     except Exception as e:
@@ -918,21 +915,48 @@ def extract_basic_sections(content):
 @app.route('/health')
 def health_check():
     try:
-        # Test database connection
-        db.session.execute('SELECT 1')
+        # Test database connection and get table info
+        tables = []
+        with app.app_context():
+            # Test database connection
+            db.session.execute('SELECT 1')
+            # Get list of tables
+            tables = db.engine.table_names()
+        
+        # Get environment info
+        env_info = {
+            'FLASK_ENV': os.getenv('FLASK_ENV', 'not set'),
+            'DATABASE_URL': 'configured' if os.getenv('DATABASE_URL') else 'not configured',
+            'OPENAI_API_KEY': 'configured' if os.getenv('OPENAI_API_KEY') else 'not configured',
+            'PORT': os.getenv('PORT', 'not set')
+        }
+        
         return jsonify({
             'status': 'healthy',
-            'database': 'connected',
-            'environment': os.getenv('FLASK_ENV', 'not set'),
-            'database_url': 'configured' if os.getenv('DATABASE_URL') else 'not configured'
+            'timestamp': str(datetime.now()),
+            'database': {
+                'status': 'connected',
+                'tables': tables
+            },
+            'environment': env_info,
+            'python_version': sys.version,
+            'dependencies': {
+                'flask': flask.__version__,
+                'sqlalchemy': sqlalchemy.__version__,
+                'openai': openai.__version__
+            }
         })
     except Exception as e:
         app.logger.error(f"Health check failed: {str(e)}")
         return jsonify({
             'status': 'unhealthy',
+            'timestamp': str(datetime.now()),
             'error': str(e),
-            'environment': os.getenv('FLASK_ENV', 'not set'),
-            'database_url': 'configured' if os.getenv('DATABASE_URL') else 'not configured'
+            'error_type': type(e).__name__,
+            'environment': {
+                'FLASK_ENV': os.getenv('FLASK_ENV', 'not set'),
+                'DATABASE_URL': 'configured' if os.getenv('DATABASE_URL') else 'not configured'
+            }
         }), 500
 
 @app.route('/analytics')
