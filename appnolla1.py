@@ -904,10 +904,17 @@ if __name__ == '__main__':
             organization=os.getenv('OPENAI_ORG_ID')
         )
         print("OpenAI client initialized successfully")
-        print(f"Using API key: {os.getenv('OPENAI_API_KEY')[:8]}...")
         
-        # Start the server on port 8084
-        socketio.run(app, debug=True, allow_unsafe_werkzeug=True, port=8084)
+        # Create the database tables
+        with app.app_context():
+            db.create_all()
+        
+        port = int(os.getenv('PORT', 8080))
+        if os.getenv('FLASK_ENV') == 'development':
+            socketio.run(app, debug=True, port=port, allow_unsafe_werkzeug=True)
+        else:
+            socketio.run(app, host='0.0.0.0', port=port, debug=False)
+            
     except Exception as e:
         print(f"Failed to start server: {str(e)}")
         print(f"Error type: {type(e)}")
