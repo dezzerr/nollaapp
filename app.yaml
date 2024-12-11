@@ -1,0 +1,27 @@
+name: nolla-app
+region: lon
+services:
+- name: nollaapp2
+  environment_slug: python
+  github:
+    branch: main
+    repo: dezzerr/nollaapp
+  source_dir: /
+  http_port: 8080
+  instance_count: 1
+  instance_size_slug: apps-s-1vcpu-0.5gb
+  run_command: gunicorn --worker-class gevent -w 1 --log-file=- --bind=0.0.0.0:$PORT appnolla1:app
+  envs:
+  - key: OPENAI_API_KEY
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+    value: ${OPENAI_API_KEY}
+  - key: SECRET_KEY
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+    value: ZbAAX3ggNiXfuRzfGsYnLOfW37n4AHlIVuqAZsjtEWQ
+  - key: FLASK_ENV
+    scope: RUN_AND_BUILD_TIME
+    value: production
+features:
+- buildpack-stack=ubuntu-22
