@@ -43,7 +43,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 CORS(app)
 db = SQLAlchemy(app)
-socketio = SocketIO(app, cors_allowed_origins="*")  # Allow all origins for development
+# Initialize Flask-SocketIO with gevent
+socketio = SocketIO(app, async_mode='gevent', cors_allowed_origins="*")  
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
