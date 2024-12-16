@@ -1,25 +1,38 @@
+# Use Python 3.9 slim image
 FROM python:3.9-slim
 
+# Set working directory
 WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    ffmpeg \
+    libpq-dev \
+    gcc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first to leverage Docker cache
+# Copy requirements first for better caching
 COPY requirements.txt .
+
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application
 COPY . .
 
-# Set environment variables
-ENV FLASK_APP=appnolla1.py
-ENV FLASK_ENV=production
+# Create temp directory for audio files
+RUN mkdir -p temp && chmod 777 temp
 
-# Expose the port the app runs on
-EXPOSE 8080
+# Set environment variables
+ENV PORT=8084
+ENV PYTHONUNBUFFERED=1
+
+# Add a health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/ || exit 1
+
+# Expose the port
+EXPOSE 8084
 
 # Command to run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--worker-class", "eventlet", "appnolla1:app"]
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 --log-level debug appnolla1:app
