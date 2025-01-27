@@ -3,48 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nolla Transcription</title>
+    <title>Nolla</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1E341C',
+                        secondary: '#A5E1A3',
+                        accent: '#82F17E',
+                    }
+                }
+            }
+        }
+    </script>
 </head>
 <body class="bg-gray-50">
     {% if current_user.is_authenticated %}
     <div class="flex h-screen">
         <!-- Sidebar -->
-        <div class="w-64 bg-[#1E341C] text-white flex flex-col">
+        <div class="w-72 bg-primary shadow-lg flex flex-col">
             <!-- Logo -->
-            <div class="p-6 border-b border-[#A5E1A3] border-opacity-20">
-                <h1 class="text-2xl font-bold">Nolla</h1>
-                <p class="text-sm text-[#A5E1A3]">Transcription Dashboard</p>
+            <div class="p-6 border-b border-secondary/20">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Nolla</h1>
+                    <p class="text-sm text-secondary">Transcription Dashboard</p>
+                </div>
             </div>
 
             <!-- Navigation -->
-            <nav class="flex-1 p-4">
-                <ul class="space-y-2">
+            <nav class="flex-1 p-6">
+                <ul class="space-y-4">
                     <li>
-                        <a href="{{ url_for('index') }}" class="flex items-center px-4 py-2 text-[#A5E1A3] hover:bg-[#82F17E] hover:bg-opacity-20 rounded-lg transition-colors duration-200">
-                            <i class="fas fa-microphone w-5 h-5 mr-3"></i>
-                            <span>Transcription</span>
+                        <a href="{{ url_for('index') }}" class="flex items-center px-4 py-3 text-secondary hover:bg-accent/10 rounded-xl transition-all duration-200 group">
+                            <i class="fas fa-microphone w-5 h-5 mr-3 group-hover:text-accent"></i>
+                            <span class="group-hover:text-white">Transcription</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ url_for('analytics') }}" class="flex items-center px-4 py-2 text-[#A5E1A3] hover:bg-[#82F17E] hover:bg-opacity-20 rounded-lg transition-colors duration-200">
-                            <i class="fas fa-chart-line w-5 h-5 mr-3"></i>
-                            <span>Analytics</span>
+                        <a href="{{ url_for('analytics') }}" class="flex items-center px-4 py-3 text-secondary hover:bg-accent/10 rounded-xl transition-all duration-200 group">
+                            <i class="fas fa-chart-line w-5 h-5 mr-3 group-hover:text-accent"></i>
+                            <span class="group-hover:text-white">Analytics</span>
                         </a>
                     </li>
                 </ul>
             </nav>
 
-            <!-- User Profile -->
-            <div class="p-4 border-t border-[#A5E1A3] border-opacity-20">
-                <div class="flex items-center space-x-3">
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-[#A5E1A3] truncate">{{ current_user.name }}</p>
-                        <p class="text-xs text-gray-400 truncate">{{ current_user.email }}</p>
+            <!-- User Profile - Now at the bottom -->
+            <div class="mt-auto p-6 border-t border-secondary/20">
+                <div class="flex items-center space-x-4 bg-accent/5 p-4 rounded-xl">
+                    <div class="w-10 h-10 bg-accent/20 rounded-full flex items-center justify-center">
+                        <span class="text-accent text-lg font-semibold">{{ current_user.name[:1] }}</span>
                     </div>
-                    <a href="{{ url_for('logout') }}" class="text-sm text-[#A5E1A3] hover:text-[#82F17E]">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white truncate">{{ current_user.name }}</p>
+                        <p class="text-xs text-secondary truncate">{{ current_user.email }}</p>
+                    </div>
+                    <a href="{{ url_for('logout') }}" class="text-secondary hover:text-accent transition-colors duration-200">
                         <i class="fas fa-sign-out-alt"></i>
                     </a>
                 </div>
@@ -53,7 +71,7 @@
 
         <!-- Main Content -->
         <div class="flex-1 flex flex-col overflow-hidden">
-            <main class="flex-1 overflow-y-auto bg-gray-50">
+            <main class="flex-1 overflow-y-auto bg-gray-50 relative">
                 {% block content %}{% endblock %}
             </main>
         </div>

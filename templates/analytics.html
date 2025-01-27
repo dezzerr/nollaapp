@@ -11,28 +11,32 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Daily Transcriptions -->
-        <div class="bg-white p-6 rounded-xl shadow-lg">
-            <h2 class="text-xl font-semibold mb-4 text-[#1E341C]">Daily Transcriptions</h2>
-            <canvas id="dailyChart"></canvas>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Daily Transcriptions - Made Larger -->
+        <div class="bg-white p-8 rounded-xl shadow-lg">
+            <h2 class="text-2xl font-semibold mb-6 text-[#1E341C]">Daily Transcriptions</h2>
+            <div class="h-[400px]">
+                <canvas id="dailyChart"></canvas>
+            </div>
         </div>
 
-        <!-- Average Duration -->
-        <div class="bg-white p-6 rounded-xl shadow-lg">
-            <h2 class="text-xl font-semibold mb-4 text-[#1E341C]">Average Transcription Time</h2>
-            <div class="flex items-center justify-center h-48">
+        <!-- Average Duration - Made Larger -->
+        <div class="bg-white p-8 rounded-xl shadow-lg">
+            <h2 class="text-2xl font-semibold mb-6 text-[#1E341C]">Average Transcription Time</h2>
+            <div class="flex items-center justify-center h-[400px]">
                 <div class="text-center">
-                    <span id="avgDuration" class="text-4xl font-bold text-[#1E341C]">0</span>
-                    <p class="text-gray-600 mt-2">seconds</p>
+                    <span id="avgDuration" class="text-7xl font-bold text-[#1E341C]">0</span>
+                    <p class="text-gray-600 mt-4 text-xl">seconds</p>
                 </div>
             </div>
         </div>
 
-        <!-- Template Usage -->
-        <div class="bg-white p-6 rounded-xl shadow-lg">
-            <h2 class="text-xl font-semibold mb-4 text-[#1E341C]">Popular Templates</h2>
-            <canvas id="templateChart"></canvas>
+        <!-- Template Usage - Full Width -->
+        <div class="bg-white p-8 rounded-xl shadow-lg lg:col-span-2">
+            <h2 class="text-2xl font-semibold mb-6 text-[#1E341C]">Popular Templates</h2>
+            <div class="h-[300px]">
+                <canvas id="templateChart"></canvas>
+            </div>
         </div>
     </div>
 </div>
@@ -53,11 +57,15 @@ function initCharts() {
                 data: [],
                 borderColor: '#82F17E',
                 backgroundColor: '#A5E1A3',
-                tension: 0.4
+                tension: 0.4,
+                borderWidth: 3,
+                pointRadius: 6,
+                pointHoverRadius: 8
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: {
                     display: false
@@ -67,7 +75,23 @@ function initCharts() {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        stepSize: 1
+                        stepSize: 1,
+                        font: {
+                            size: 14
+                        }
+                    },
+                    grid: {
+                        color: '#e2e8f0'
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            size: 14
+                        }
+                    },
+                    grid: {
+                        color: '#e2e8f0'
                     }
                 }
             }
@@ -92,9 +116,16 @@ function initCharts() {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'bottom'
+                    position: 'right',
+                    labels: {
+                        font: {
+                            size: 14
+                        },
+                        padding: 20
+                    }
                 }
             }
         }

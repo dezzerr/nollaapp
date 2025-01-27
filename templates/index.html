@@ -1,83 +1,103 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="p-8">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-[#1E341C]">Welcome, {{ user_name.split()[0] }}</h1>
+<div class="p-8 max-w-7xl mx-auto">
+    <!-- Header Section -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-primary">Welcome, {{ user_name.split()[0] }}</h1>
+            <p class="text-gray-600 mt-1">Let's start a new transcription session</p>
+        </div>
         <div class="flex items-center space-x-4">
-            <button id="newSessionBtn" class="bg-[#82F17E] text-[#1E341C] px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90">
+            <button id="newSessionBtn" class="bg-accent hover:bg-accent/90 text-primary px-6 py-3 rounded-xl flex items-center space-x-3 shadow-sm transition-all duration-200">
                 <i class="fas fa-plus"></i>
-                <span>New Session</span>
+                <span class="font-medium">New Session</span>
             </button>
-            <button id="downloadNotesBtn" class="bg-[#82F17E] text-[#1E341C] px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-opacity-90">
+            <button id="downloadNotesBtn" class="bg-white hover:bg-gray-50 text-primary border border-gray-200 px-6 py-3 rounded-xl flex items-center space-x-3 shadow-sm transition-all duration-200">
                 <i class="fas fa-download"></i>
-                <span>Download Notes</span>
+                <span class="font-medium">Download Notes</span>
             </button>
         </div>
     </div>
 
-    <!-- Patient Info -->
-    <div class="bg-white rounded-xl shadow-sm mb-6 p-4">
+    <!-- Patient Info Card -->
+    <div class="bg-white rounded-2xl shadow-sm mb-8 p-6">
         <div class="flex justify-between items-center">
-            <div>
-                <input type="text" id="patientName" class="editable-field text-xl font-semibold mb-1" placeholder="Enter Patient Name">
-                <p class="text-sm text-gray-500">Patient ID: NOL-2023-001</p>
+            <div class="space-y-2">
+                <input type="text" id="patientName" 
+                       class="text-2xl font-semibold text-primary focus:outline-none focus:ring-2 focus:ring-accent/50 rounded-lg px-2 py-1" 
+                       placeholder="Enter Patient Name">
+                <p class="text-sm text-gray-500 flex items-center space-x-2">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Patient ID: NOL-2023-001</span>
+                </p>
             </div>
-            <div>
-                <input type="date" id="sessionDate" class="editable-field">
+            <div class="flex items-center space-x-4">
+                <div class="text-sm text-gray-500">Session Date:</div>
+                <input type="date" id="sessionDate" 
+                       class="border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-accent/50">
             </div>
         </div>
     </div>
 
     <!-- Recording Section -->
-    <div class="transcription-container bg-white rounded-xl shadow-sm">
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
         <!-- Recording Controls -->
-        <div class="border-b p-6">
+        <div class="border-b border-gray-100 p-6">
             <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-4">
-                    <button id="recordButton" class="record-btn" disabled>
+                <div class="flex items-center space-x-6">
+                    <button id="recordButton" 
+                            class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-xl flex items-center space-x-3 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled>
                         <i class="fas fa-microphone"></i>
-                        <span>Start Recording</span>
+                        <span class="font-medium">Start Recording</span>
                     </button>
-                    <span id="timer" class="text-lg font-mono">0:00</span>
-                    <div id="recordingStatus" class="hidden">
-                        <span class="recording-dot"></span>
-                        <span class="text-sm text-gray-600 ml-1">Recording...</span>
+                    <span id="timer" class="text-xl font-mono text-primary">0:00</span>
+                    <div id="recordingStatus" class="hidden flex items-center">
+                        <span class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
+                        <span class="text-sm text-gray-600 ml-2">Recording...</span>
                     </div>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="consentToggle">
-                        <span class="toggle-slider"></span>
+                <div class="flex items-center space-x-3">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="consentToggle" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent/50 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                        <span class="text-sm text-gray-600 ml-2">Patient Consent</span>
                     </label>
-                    <span class="text-sm text-gray-600">Patient Consent</span>
                 </div>
             </div>
         </div>
 
         <!-- Tab Navigation -->
-        <div class="border-b">
+        <div class="border-b border-gray-100">
             <nav class="flex justify-between items-center px-6" aria-label="Tabs">
-                <div class="flex space-x-4 p-4">
+                <div class="flex space-x-6">
                     <button id="transcriptTab" 
-                            class="tab-button px-4 py-2 text-sm font-medium border-b-2 border-transparent hover:text-[#1E341C] hover:border-[#82F17E] transition-all duration-200" 
-                            onclick="switchTab('transcript')">
-                        Transcript
+                            class="px-4 py-4 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-primary hover:border-accent transition-all duration-200">
+                        <span class="flex items-center space-x-2">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Transcript</span>
+                        </span>
                     </button>
-                    <button id="noteTab" 
-                            class="tab-button px-4 py-2 text-sm font-medium border-b-2 border-transparent hover:text-[#1E341C] hover:border-[#82F17E] transition-all duration-200" 
-                            onclick="switchTab('note')">
-                        Note
+                    <button id="notesTab" 
+                            class="px-4 py-4 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-primary hover:border-accent transition-all duration-200">
+                        <span class="flex items-center space-x-2">
+                            <i class="fas fa-notes-medical"></i>
+                            <span>Notes</span>
+                        </span>
                     </button>
                     <button id="letterTab" 
-                            class="tab-button px-4 py-2 text-sm font-medium border-b-2 border-transparent hover:text-[#1E341C] hover:border-[#82F17E] transition-all duration-200" 
-                            onclick="switchTab('letter')">
-                        Letter
+                            class="px-4 py-4 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-primary hover:border-accent transition-all duration-200">
+                        <span class="flex items-center space-x-2">
+                            <i class="fas fa-envelope"></i>
+                            <span>Letter</span>
+                        </span>
                     </button>
                 </div>
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-3">
                     <label class="text-sm text-gray-600">Template:</label>
-                    <select id="templateSelect" class="border rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-[#82F17E] focus:border-transparent">
+                    <select id="templateSelect" 
+                            class="border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/50">
                         <option value="soap">SOAP Note</option>
                         <option value="birp">BIRP Note</option>
                         <option value="dap">DAP Note</option>
@@ -88,116 +108,187 @@
         </div>
 
         <!-- Content Panels -->
-        <div class="transcription-content">
+        <div class="min-h-[400px] p-6">
             <!-- Transcript Panel -->
             <div id="transcriptPanel" class="h-full">
-                <div id="loadingTranscription" class="hidden">
-                    <div class="loading-line loading-shimmer"></div>
-                    <div class="loading-line loading-shimmer"></div>
-                    <div class="loading-line loading-shimmer"></div>
+                <div id="loadingTranscription" class="hidden space-y-4">
+                    <div class="h-4 bg-gray-200 rounded animate-pulse"></div>
+                    <div class="h-4 bg-gray-200 rounded animate-pulse w-5/6"></div>
+                    <div class="h-4 bg-gray-200 rounded animate-pulse w-4/6"></div>
                 </div>
                 <div id="transcriptionOutput" class="space-y-4"></div>
             </div>
 
             <!-- Notes Panel -->
-            <div id="notePanel" class="hidden note-container">
-                <!-- SOAP Note Template -->
-                <div id="soapTemplate" class="space-y-6">
-                    <div class="soap-field-container">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Subjective</label>
-                        <textarea id="subjectiveText" class="soap-field"></textarea>
+            <div id="notesPanel" class="hidden space-y-6 p-6 bg-white rounded-xl shadow-lg">
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-semibold text-gray-800">Clinical Notes</h2>
+                        <div class="space-x-2">
+                            <button id="generateNotesBtn" 
+                                    class="bg-accent hover:bg-accent/90 text-white px-4 py-2 rounded-lg transition-colors">
+                                <i class="fas fa-magic mr-2"></i>Generate Notes
+                            </button>
+                            <button id="saveNotesBtn" 
+                                    class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors">
+                                <i class="fas fa-save mr-2"></i>Save Notes
+                            </button>
+                        </div>
                     </div>
-                    <div class="soap-field-container">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Objective</label>
-                        <textarea id="objectiveText" class="soap-field"></textarea>
-                    </div>
-                    <div class="soap-field-container">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Assessment</label>
-                        <textarea id="assessmentText" class="soap-field"></textarea>
-                    </div>
-                    <div class="soap-field-container">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Plan</label>
-                        <textarea id="planText" class="soap-field"></textarea>
-                    </div>
-                </div>
 
-                <!-- BIRP Note Template -->
-                <div id="birpTemplate" class="space-y-6 hidden">
-                    <div class="soap-field-container">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Behavior</label>
-                        <textarea id="behaviorText" class="soap-field" placeholder="Document client's presentation and behavior during the session..."></textarea>
+                    <!-- SOAP Note Template -->
+                    <div id="soapTemplate" class="space-y-6">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Subjective</label>
+                            <textarea id="subjectiveText" 
+                                    class="w-full h-32 border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                                    placeholder="Patient's reported symptoms, concerns, and history..."></textarea>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Objective</label>
+                            <textarea id="objectiveText" 
+                                    class="w-full h-32 border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                                    placeholder="Observable findings and measurements..."></textarea>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Assessment</label>
+                            <textarea id="assessmentText" 
+                                    class="w-full h-32 border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                                    placeholder="Clinical assessment and diagnoses..."></textarea>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Plan</label>
+                            <textarea id="planText" 
+                                    class="w-full h-32 border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                                    placeholder="Treatment plan and next steps..."></textarea>
+                        </div>
                     </div>
-                    <div class="soap-field-container">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Intervention</label>
-                        <textarea id="interventionText" class="soap-field" placeholder="Document interventions and themes explored during the session..."></textarea>
-                    </div>
-                    <div class="soap-field-container">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Response</label>
-                        <textarea id="responseText" class="soap-field" placeholder="Document how the client responded to interventions..."></textarea>
-                    </div>
-                    <div class="soap-field-container">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Plan</label>
-                        <textarea id="birpPlanText" class="soap-field" placeholder="Document plan for future sessions..."></textarea>
-                    </div>
-                </div>
 
-                <!-- DAP Note Template -->
-                <div id="dapTemplate" class="space-y-6 hidden">
-                    <div class="soap-field-container">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Data</label>
-                        <textarea id="dataText" class="soap-field" placeholder="Document objective and subjective observations..."></textarea>
+                    <!-- BIRP Note Template -->
+                    <div id="birpTemplate" class="space-y-6 hidden">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Behavior</label>
+                            <textarea id="behaviorText" 
+                                    class="w-full h-32 border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                                    placeholder="Document client's presentation and behavior during the session..."></textarea>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Intervention</label>
+                            <textarea id="interventionText" 
+                                    class="w-full h-32 border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                                    placeholder="Document interventions and themes explored during the session..."></textarea>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Response</label>
+                            <textarea id="responseText" 
+                                    class="w-full h-32 border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                                    placeholder="Document how the client responded to interventions..."></textarea>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Plan</label>
+                            <textarea id="birpPlanText" 
+                                    class="w-full h-32 border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                                    placeholder="Document plan for future sessions..."></textarea>
+                        </div>
                     </div>
-                    <div class="soap-field-container">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Assessment</label>
-                        <textarea id="dapAssessmentText" class="soap-field" placeholder="Document clinical interpretation and assessment..."></textarea>
-                    </div>
-                    <div class="soap-field-container">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Plan</label>
-                        <textarea id="dapPlanText" class="soap-field" placeholder="Document treatment plan and next steps..."></textarea>
-                    </div>
-                </div>
 
-                <!-- Basic Note Template -->
-                <div id="basicTemplate" class="space-y-6 hidden">
-                    <div class="soap-field-container">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Presentation</label>
-                        <textarea id="presentationText" class="soap-field" placeholder="Document client's presentation and appearance..."></textarea>
+                    <!-- DAP Note Template -->
+                    <div id="dapTemplate" class="space-y-6 hidden">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Data</label>
+                            <textarea id="dataText" 
+                                    class="w-full h-32 border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                                    placeholder="Document objective and subjective observations..."></textarea>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Assessment</label>
+                            <textarea id="dapAssessmentText" 
+                                    class="w-full h-32 border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                                    placeholder="Document clinical interpretation and assessment..."></textarea>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Plan</label>
+                            <textarea id="dapPlanText" 
+                                    class="w-full h-32 border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                                    placeholder="Document treatment plan and next steps..."></textarea>
+                        </div>
                     </div>
-                    <div class="soap-field-container">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Mental State</label>
-                        <textarea id="stateText" class="soap-field" placeholder="Document mental state and mood observations..."></textarea>
+
+                    <!-- Basic Note Template -->
+                    <div id="basicTemplate" class="space-y-6 hidden">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Presentation</label>
+                            <textarea id="presentationText" 
+                                    class="w-full h-32 border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                                    placeholder="Document client's presentation and appearance..."></textarea>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Mental State</label>
+                            <textarea id="stateText" 
+                                    class="w-full h-32 border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                                    placeholder="Document mental state and mood observations..."></textarea>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Assessment</label>
+                            <textarea id="basicAssessmentText" 
+                                    class="w-full h-32 border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                                    placeholder="Document clinical assessment and diagnoses..."></textarea>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Plan</label>
+                            <textarea id="basicPlanText" 
+                                    class="w-full h-32 border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                                    placeholder="Document treatment plan and recommendations..."></textarea>
+                        </div>
                     </div>
-                    <div class="soap-field-container">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Assessment</label>
-                        <textarea id="basicAssessmentText" class="soap-field" placeholder="Document clinical assessment and diagnoses..."></textarea>
-                    </div>
-                    <div class="soap-field-container">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Plan</label>
-                        <textarea id="basicPlanText" class="soap-field" placeholder="Document treatment plan and recommendations..."></textarea>
+
+                    <!-- Action Buttons -->
+                    <div class="flex justify-end space-x-2 pt-4">
                     </div>
                 </div>
             </div>
 
             <!-- Letter Panel -->
-            <div id="letterPanel" class="hidden p-6 space-y-6">
-                <div class="letter-input-container space-y-4">
-                    <div class="mb-4">
-                        <label for="letterRequest" class="block text-sm font-medium text-gray-700 mb-2">
+            <div id="letterPanel" class="hidden space-y-6 p-6 bg-white rounded-xl shadow-lg">
+                <div class="space-y-4">
+                    <h2 class="text-2xl font-semibold text-gray-800">Clinical Letter Generation</h2>
+                    
+                    <!-- Letter Request Input -->
+                    <div class="space-y-2">
+                        <label for="letterRequest" class="block text-sm font-medium text-gray-700">
                             Letter Request
                         </label>
                         <textarea id="letterRequest" 
-                                class="w-full p-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-[#82F17E] focus:border-transparent"
-                                placeholder="Describe what kind of letter you need (e.g., 'Write a referral letter to Dr. Smith about the patient's anxiety symptoms')"></textarea>
+                                class="w-full h-32 border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                                placeholder="Describe what kind of letter you need (e.g., 'Generate a referral letter to a cardiologist based on today's consultation')"></textarea>
                     </div>
-                    <button id="generateLetterBtn">
-                        <i class="fas fa-pen-fancy"></i>
+
+                    <!-- Generate Button -->
+                    <button id="generateLetterBtn" 
+                            class="w-full bg-accent hover:bg-accent/90 text-white font-medium py-2 px-4 rounded-lg transition-colors">
                         Generate Letter
                     </button>
-                    <div id="letterOutput" class="mt-4 p-6 border rounded-lg whitespace-pre-wrap hidden">
-                        <button class="copy-button">
-                            <i class="fas fa-copy"></i>
-                        </button>
-                        <div id="letterContent"></div>
+
+                    <!-- Letter Output -->
+                    <div id="letterOutputContainer" class="hidden space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-medium text-gray-800">Generated Letter</h3>
+                            <div class="space-x-2">
+                                <button id="copyLetterBtn" 
+                                        class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                                        disabled>
+                                    <i class="fas fa-copy mr-2"></i>Copy
+                                </button>
+                                <button id="downloadLetterBtn" 
+                                        class="bg-accent hover:bg-accent/90 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                                        disabled>
+                                    <i class="fas fa-download mr-2"></i>Download PDF
+                                </button>
+                            </div>
+                        </div>
+                        <textarea id="letterOutput" 
+                                class="w-full h-96 border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                                readonly></textarea>
                     </div>
                 </div>
             </div>

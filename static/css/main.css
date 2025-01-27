@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles */
+.auth-container {
+    @apply flex min-h-screen;
+    background: radial-gradient(circle at center, #1E341C 0%, #000000 100%);
+    position: relative;
+}
+
+.logo {
+    @apply absolute top-8 left-8 text-4xl text-white font-bold;
+}
+
+.auth-form-container {
+    @apply flex-[2] p-8 flex flex-col justify-center max-w-lg mx-auto pt-24;
+}
+
+.testimonial-container {
+    @apply flex-[0.7] bg-[#82F17E] p-8 flex flex-col justify-center relative rounded-3xl m-8 mr-8 shadow-lg;
+}
+
+.form-title {
+    @apply text-white text-2xl mb-8;
+}
+
+.form-group {
+    @apply mb-6;
+}
+
+.form-group label {
+    @apply block text-white mb-2;
+}
+
+.form-group input {
+    @apply w-full p-3 rounded-lg border-none bg-white/10 text-white text-base;
+}
+
+.form-group input::placeholder {
+    @apply text-white/50;
+}
+
+.submit-btn {
+    @apply w-full p-3 bg-[#82F17E] text-[#1E341C] border-none rounded-lg text-base cursor-pointer transition-colors;
+}
+
+.submit-btn:hover {
+    @apply bg-[#6CD369];
+}
+
+.login-link, .create-account {
+    @apply text-center mt-8 text-white;
+}
+
+.login-link a, .create-account a {
+    @apply text-[#82F17E] no-underline;
+}
+
+.testimonial {
+    @apply text-[#1E341C] p-8 rounded-lg bg-white/90 mb-8;
+}
+
+.testimonial-quote {
+    @apply text-2xl mb-4;
+}
+
+.testimonial-author {
+    @apply font-bold;
+}
+
+.testimonial-role {
+    @apply text-[#2A482A];
+}
+
+@media (max-width: 768px) {
+    .testimonial-container {
+        @apply hidden;
+    }
+    
+    .auth-form-container {
+        @apply max-w-full;
+    }
+}

@@ -56,6 +56,51 @@ python create_db.py
 python appnolla1.py
 ```
 
+## Deployment to Google Cloud Run
+
+### Prerequisites
+
+1. Install the [Google Cloud SDK](https://cloud.google.com/sdk/docs/install)
+2. Initialize the SDK and set your project:
+```bash
+gcloud init
+gcloud config set project YOUR_PROJECT_ID
+```
+
+### Deployment Steps
+
+1. Enable required APIs:
+```bash
+gcloud services enable cloudbuild.googleapis.com
+gcloud services enable run.googleapis.com
+```
+
+2. Build and deploy using Cloud Build:
+```bash
+gcloud builds submit --config cloudbuild.yaml
+```
+
+3. Set environment variables in Cloud Run:
+```bash
+gcloud run services update medical-transcription-app \
+  --update-env-vars OPENAI_API_KEY=your_api_key,OPENAI_ORG_ID=your_org_id
+```
+
+4. Get the service URL:
+```bash
+gcloud run services describe medical-transcription-app \
+  --platform managed \
+  --region us-central1 \
+  --format 'value(status.url)'
+```
+
+### Important Notes
+
+- The application uses port 8084 internally but Cloud Run will handle port mapping automatically
+- Environment variables must be set in the Cloud Run console or via gcloud command
+- Database persistence will require additional setup with Cloud SQL or similar service
+- For production deployment, consider setting up proper authentication
+
 ## Project Structure
 
 ```

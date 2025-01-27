@@ -1,37 +1,15 @@
-name: nolla-app
-region: lon
-databases:
-- engine: PG
-  name: nolla-db
-  num_nodes: 1
-  size: db-s-dev-database
-  version: "14"
+runtime: python39
+service: default
 
-services:
-- name: nollaapp2
-  environment_slug: python
-  github:
-    branch: main
-    repo: dezzerr/nollaapp
-  source_dir: /
-  http_port: 8080
-  instance_count: 1
-  instance_size_slug: apps-s-1vcpu-0.5gb
-  run_command: bash ./startup.sh
-  envs:
-  - key: OPENAI_API_KEY
-    scope: RUN_AND_BUILD_TIME
-    type: SECRET
-    value: ${OPENAI_API_KEY}
-  - key: SECRET_KEY
-    scope: RUN_AND_BUILD_TIME
-    type: SECRET
-    value: ZbAAX3ggNiXfuRzfGsYnLOfW37n4AHlIVuqAZsjtEWQ
-  - key: FLASK_ENV
-    scope: RUN_AND_BUILD_TIME
-    value: production
-  - key: DATABASE_URL
-    scope: RUN_AND_BUILD_TIME
-    value: ${nolla-db.DATABASE_URL}
-features:
-- buildpack-stack=ubuntu-22
+instance_class: F1
+
+env_variables:
+  FLASK_ENV: "production"
+
+handlers:
+- url: /static
+  static_dir: static
+- url: /.*
+  script: auto
+
+entrypoint: gunicorn -b :$PORT appnolla1:app --worker-class eventlet

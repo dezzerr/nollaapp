@@ -1,148 +1,64 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - Medical Transcription Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #82F17E;
-            --primary-hover: #A5E1A3;
-            --bg-color: #F5F5F5;
-            --card-bg: #ffffff;
-            --text-color: #1E341C;
-            --accent-color: #F0D10C;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-color);
-        }
-
-        .signup-container {
-            background-color: var(--card-bg);
-            padding: 2.5rem;
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(30, 52, 28, 0.1), 0 2px 4px -2px rgba(30, 52, 28, 0.06);
-            width: 100%;
-            max-width: 420px;
-            border: 2px solid var(--text-color);
-        }
-
-        .logo {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .logo h2 {
-            color: var(--text-color);
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-
-        .form-label {
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            color: var(--text-color);
-        }
-
-        .form-control {
-            border-radius: 0.5rem;
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--primary-hover);
-            color: var(--text-color);
-        }
-
-        .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(130, 241, 126, 0.2);
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            color: var(--text-color);
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-            border-color: var(--primary-hover);
-            transform: translateY(-1px);
-            color: var(--text-color);
-        }
-
-        .alert {
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            background-color: rgba(240, 209, 12, 0.1);
-            border-color: var(--accent-color);
-            color: var(--text-color);
-        }
-
-        a {
-            color: var(--text-color);
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        a:hover {
-            color: var(--primary-color);
-            text-decoration: underline;
-        }
-
-        .text-muted {
-            color: var(--text-color) !important;
-            opacity: 0.7;
-        }
-    </style>
+    <title>Sign Up - Nolla</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
-<body>
-    <div class="signup-container">
-        <div class="logo">
-            <h2>Medical Transcription</h2>
-            <p class="text-muted">Create your account</p>
+<body class="bg-black">
+    <div class="flex min-h-screen bg-gradient-radial from-[#1E341C] to-black relative">
+        <div class="absolute top-8 left-8 text-2xl text-white font-bold">Nolla</div>
+        
+        <div class="flex-[2] p-8 flex flex-col justify-center max-w-md mx-auto pt-24">
+            <h2 class="text-white text-2xl mb-8 font-bold">Create your Account</h2>
+            <form action="{{ url_for('signup') }}" method="POST" class="space-y-6">
+                <div class="space-y-2">
+                    <label for="name" class="block text-white">Full Name</label>
+                    <input type="text" id="name" name="name" 
+                           class="w-full p-3 rounded-lg bg-white/10 text-white border-0 focus:ring-2 focus:ring-[#82F17E]"
+                           placeholder="Enter your full name" required>
+                </div>
+                <div class="space-y-2">
+                    <label for="email" class="block text-white">Email</label>
+                    <input type="email" id="email" name="email" 
+                           class="w-full p-3 rounded-lg bg-white/10 text-white border-0 focus:ring-2 focus:ring-[#82F17E]"
+                           placeholder="Enter your email" required>
+                </div>
+                <div class="space-y-2">
+                    <label for="password" class="block text-white">Password</label>
+                    <input type="password" id="password" name="password" 
+                           class="w-full p-3 rounded-lg bg-white/10 text-white border-0 focus:ring-2 focus:ring-[#82F17E]"
+                           placeholder="Enter your password" required>
+                </div>
+                <div class="space-y-2">
+                    <label for="confirm_password" class="block text-white">Confirm Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" 
+                           class="w-full p-3 rounded-lg bg-white/10 text-white border-0 focus:ring-2 focus:ring-[#82F17E]"
+                           placeholder="Confirm your password" required>
+                </div>
+                <button type="submit" 
+                        class="w-full p-3 bg-[#82F17E] text-[#1E341C] rounded-lg font-medium hover:bg-[#6CD369] transition-colors">
+                    Create Account
+                </button>
+            </form>
+            <div class="text-center mt-8 text-white">
+                Already have an account? 
+                <a href="{{ url_for('login') }}" class="text-[#82F17E] hover:underline">Login</a>
+            </div>
         </div>
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        <form method="POST" action="{{ url_for('signup') }}">
-            <div class="form-group">
-                <label class="form-label" for="name">Full Name</label>
-                <input type="text" class="form-control" id="name" name="name" required>
+        
+        <div class="flex-[0.7] p-8 flex flex-col justify-center">
+            <div class="bg-[#82F17E] p-8 rounded-2xl shadow-lg mx-8">
+                <div class="bg-white/90 p-8 rounded-xl mb-4">
+                    <p class="text-xl mb-4 text-[#1E341C] font-medium">
+                        "The AI-powered features in Nolla have transformed our practice. Patient documentation has never been this efficient."
+                    </p>
+                    <p class="font-bold text-[#1E341C]">Dr. Michael Zhang</p>
+                    <p class="text-[#2A482A]">Family Medicine Specialist</p>
+                </div>
             </div>
-            <div class="form-group">
-                <label class="form-label" for="email">Email address</label>
-                <input type="email" class="form-control" id="email" name="email" required>
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="password">Password</label>
-                <input type="password" class="form-control" id="password" name="password" required>
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="confirm_password">Confirm Password</label>
-                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
-            </div>
-            <button type="submit" class="btn btn-primary w-100 mb-3">Create Account</button>
-            <p class="text-center mb-0">Already have an account? <a href="{{ url_for('login') }}">Sign in</a></p>
-        </form>
+        </div>
     </div>
 </body>
 </html>

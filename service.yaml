@@ -1,0 +1,36 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: nollaapp
+spec:
+  template:
+    spec:
+      containers:
+      - image: us-central1-docker.pkg.dev/nollaapp1/cloud-run-source-deploy/nollaapp
+        env:
+        - name: FLASK_ENV
+          value: production
+        - name: APP_VERSION
+          value: "1.0.0"
+        - name: MEMORY_LIMIT_MB
+          value: "2048"
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: openai-api-key
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: app-secret-key
+        volumeMounts:
+        - name: firebase-creds
+          mountPath: /secrets
+      volumes:
+      - name: firebase-creds
+        secret:
+          secretName: firebase-credentials
+          items:
+          - key: latest
+            path: firebase-credentials.json

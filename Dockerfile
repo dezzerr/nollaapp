@@ -4,35 +4,64 @@ FROM python:3.9-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
+# Install build dependencies
 RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    gcc \
-    curl \
+    build-essential \
+    python3-dev \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
+# Create a non-root user
+RUN useradd -m appuser && chown -R appuser:appuser /app
+
+# Create necessary directories
+RUN mkdir -p /app/instance && chown -R appuser:appuser /app/instance && chmod 777 /app/instance
+RUN mkdir -p /app/secrets && chown -R appuser:appuser /app/secrets
+RUN mkdir -p /app/uploads && chown -R appuser:appuser /app/uploads && chmod 777 /app/uploads
+
 # Copy requirements first for better caching
-COPY requirements.txt .
+COPY --chown=appuser:appuser requirements.txt .
 
 # Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt gunicorn[gevent]
 
-# Copy the rest of the application
-COPY . .
+# Copy the application files
+COPY --chown=appuser:appuser nollaapp /app/nollaapp/
+COPY --chown=appuser:appuser static /app/static/
+COPY --chown=appuser:appuser templates /app/templates/
 
-# Create temp directory for audio files
-RUN mkdir -p temp && chmod 777 temp
+# Create startup script
+RUN echo '#!/bin/sh\n\
+cd /app && \
+PYTHONPATH=/app \
+exec gunicorn \
+    --worker-class gevent \
+    --worker-connections 1000 \
+    --bind "0.0.0.0:$PORT" \
+    --workers 1 \
+    --threads 8 \
+    --timeout 300 \
+    --worker-tmp-dir /dev/shm \
+    --access-logfile - \
+    --error-logfile - \
+    --log-level info \
+    --chdir /app \
+    "nollaapp.appnolla1:app"' > /app/start.sh && \
+    chmod +x /app/start.sh
 
-# Set environment variables
+# Set non-sensitive environment variables
+ENV FLASK_APP=nollaapp.appnolla1:app
+ENV FLASK_ENV=production
 ENV PORT=8084
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+ENV UPLOAD_FOLDER=/app/uploads
 
-# Add a health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/ || exit 1
+# Switch to non-root user
+USER appuser
 
 # Expose the port
 EXPOSE 8084
 
-# Command to run the application
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 --log-level debug appnolla1:app
+# Use exec form of CMD with JSON array
+CMD ["./start.sh"]
