@@ -76,3 +76,13 @@ dataconnect-generated/
 # Google Cloud
 google-cloud-sdk*/
 .gcloud/
+
+# Service account credentials
+config/*.json
+*serviceAccountKey*.json
+*firebase-adminsdk*.json
+
+# Environment variables
+.env
+.env.local
+.env.*.local
